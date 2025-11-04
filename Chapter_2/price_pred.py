@@ -14,17 +14,17 @@ data_path = Path("datasets/housing")
 
 
 def load_housing_data():
-    tarball_path = Path("datasets/housing.tgz")
+    tarball_path = Path("Chapter_2/datasets/housing.tgz")
 
     if not tarball_path.is_file():
-        Path("datasets").mkdir(parents=True, exist_ok=True)
+        Path("Chapter_2/datasets").mkdir(parents=True, exist_ok=True)
         url = "https://github.com/ageron/data/raw/main/housing.tgz"
         urllib.request.urlretrieve(url, tarball_path)
 
     with tarfile.open(tarball_path) as housing_tarball:
-        housing_tarball.extractall(path="datasets")
+        housing_tarball.extractall(path="Chapter_2/datasets")
 
-    return pd.read_csv(Path("datasets/housing/housing.csv"))
+    return pd.read_csv(Path("Chapter_2/datasets/housing/housing.csv"))
 
 
 housing = load_housing_data()
