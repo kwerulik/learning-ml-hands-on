@@ -118,3 +118,20 @@ imputer.fit(housing_num)
 X = imputer.transform(housing_num)
 
 housing_tr = pd.DataFrame(X, columns=housing_num.columns, index=housing_num.index)
+
+
+housing_cat = housing[["ocean_proximity"]]
+# print(housing_cat.head())
+
+from sklearn.preprocessing import OrdinalEncoder
+ordinal_encoder = OrdinalEncoder()
+housing_cat_encoded = ordinal_encoder.fit_transform(housing_cat)
+
+# print(housing_cat_encoded[:8])
+# print(ordinal_encoder.categories_)
+
+from sklearn.preprocessing import OneHotEncoder
+cat_encoder = OneHotEncoder()
+housing_cat_1hot = cat_encoder.fit_transform(housing_cat)
+
+# print(housing_cat_1hot.toarray())
