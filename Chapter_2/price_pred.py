@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.impute import SimpleImputer
+from pandas.plotting import scatter_matrix
 
 data_path = Path("datasets/housing")
 
@@ -52,7 +54,7 @@ housing = load_housing_data()
 
 housing["income_cat"] = pd.cut(housing["median_income"], bins=[
                                0., 1.5, 3.0, 4.5, 6., np.inf], labels=[1, 2, 3, 4, 5])
-housing["income_cat"].value_counts().sort_index().plot.bar(rot=0, grid=True)
+# housing["income_cat"].value_counts().sort_index().plot.bar(rot=0, grid=True)
 # # plt.xlabel("Income category")
 # # plt.ylabel("Number of districts")
 # # plt.show()
@@ -67,7 +69,7 @@ housing["income_cat"].value_counts().sort_index().plot.bar(rot=0, grid=True)
 
 # strat_train_set_n, strat_test_set_n = strat_splits[0]
 
-# #* Simpler
+# #? Simpler
 strat_train_set, strat_test_set = train_test_split(
     housing, test_size=0.2, stratify=housing['income_cat'], random_state=42)
 
@@ -77,3 +79,42 @@ for set_ in (strat_train_set, strat_test_set):
     set_.drop("income_cat", axis=1, inplace=True)
 
 housing = strat_train_set.copy()
+
+# * Visualizing geographical data
+
+# housing.plot(kind="scatter", x="longitude", y='latitude', grid=True, s=housing['population']/100, label='population', c='median_house_value', cmap='jet', colorbar=True, legend=True, sharex=False, figsize=(10, 7))
+# plt.show()
+
+# corr_matrix = housing.corr(numeric_only=True)
+# corr_matrix["median_house_value"].sort_values(ascending=False)
+# attributes = ["median_house_value", "median_income", 'total_rooms', "housing_median_age"]
+# scatter_matrix(housing[attributes], figsize=(12, 8))
+# plt.show()
+
+# housing.plot(kind="scatter", x="median_income",
+#              y="median_house_value", alpha=0.1, grid=True)
+# plt.show()
+
+housing["rooms_per_house"] = housing["total_rooms"] / housing["households"]
+housing["bedroms_ration"] = housing["total_bedrooms"] / housing["total_rooms"]
+housing["people_per_housee"] = housing["population"] / housing["households"]
+
+# corr_matrix = housing.corr(numeric_only=True)
+# print(corr_matrix["median_house_value"].sort_values(ascending=False))
+
+housing = strat_train_set.drop("median_house_value", axis=1)
+housing_labels = strat_train_set["median_house_value"].copy()
+
+# median = housing["total_bedrooms"].median()
+# housing["total_bedrooms"].fillna(median, inplace=True)
+
+imputer = SimpleImputer(strategy='median')
+housing_num = housing.select_dtypes(include=[np.number])
+imputer.fit(housing_num)
+
+# print(imputer.statistics_)
+# print(housing_num.median().values)
+
+X = imputer.transform(housing_num)
+
+housing_tr = pd.DataFrame(X, columns=housing_num.columns, index=housing_num.index)
