@@ -1,3 +1,10 @@
+from sklearn.compose import make_column_selector, make_column_transformer
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OrdinalEncoder
 import sklearn
 import pandas as pd
 from pathlib import Path
@@ -117,20 +124,19 @@ imputer.fit(housing_num)
 
 X = imputer.transform(housing_num)
 
-housing_tr = pd.DataFrame(X, columns=housing_num.columns, index=housing_num.index)
+housing_tr = pd.DataFrame(
+    X, columns=housing_num.columns, index=housing_num.index)
 
 
 housing_cat = housing[["ocean_proximity"]]
 # print(housing_cat.head())
 
-from sklearn.preprocessing import OrdinalEncoder
 ordinal_encoder = OrdinalEncoder()
 housing_cat_encoded = ordinal_encoder.fit_transform(housing_cat)
 
 # print(housing_cat_encoded[:8])
 # print(ordinal_encoder.categories_)
 
-from sklearn.preprocessing import OneHotEncoder
 cat_encoder = OneHotEncoder()
 housing_cat_1hot = cat_encoder.fit_transform(housing_cat)
 
@@ -140,11 +146,9 @@ housing_cat_1hot = cat_encoder.fit_transform(housing_cat)
 # min_max_scaler = MinMaxScaler()
 # housing_min_max_scaled = min_max_scaler.fit_transform(housing_num)
 
-from sklearn.preprocessing import StandardScaler
 # std_scaler = StandardScaler()
 # housing_num_std_scaled = std_scaler.fit_transform(housing_num)
 
-from sklearn.linear_model import LinearRegression
 
 # target_scaler = StandardScaler()
 # scaled_labels = target_scaler.fit_transform(housing_labels.to_frame())
@@ -167,5 +171,27 @@ from sklearn.linear_model import LinearRegression
 # log_transformer = FunctionTransformer(np.log, inverse_func=np.exp)
 # log_pop = log_transformer.transform(housing[["population"]])
 
-from sklearn.pipeline import Pipeline
-num_pipeline = Pipeline([("impute", SimpleImputer(strategy='median')), ("standardize", StandardScaler())])
+# from sklearn.pipeline import Pipeline
+# num_pipeline = Pipeline([("impute", SimpleImputer(strategy='median')), ("standardize", StandardScaler())])
+
+num_pipline = make_pipeline(SimpleImputer(strategy="median"), StandardScaler())
+# housing_num_prepered = num_pipline.fit_transform(housing_num)
+# print(housing_num_prepered[:2].round(2))
+# df_housing_num_prepared = pd.DataFrame(housing_num_prepered, columns=num_pipline.get_feature_names_out(), index=housing_num.index)
+# print(df_housing_num_prepared)
+
+# num_attribs = ["longitude", "latitude", "housing_median_age", "total_rooms", "total_bedrooms", "population", "households", "median_income"]
+# cat_attribs = ["ocean_proximity"]
+cat_pipeline = make_pipeline(SimpleImputer(
+    strategy='most_frequent'), OneHotEncoder(handle_unknown='ignore'))
+# preprocessing = ColumnTransformer([("num", num_pipline, cat_attribs), ('cat', cat_pipeline, cat_attribs)])
+
+preprocessing = make_column_transformer(
+    (num_pipline, make_column_selector(dtype_include=np.number)),
+    (cat_pipeline, make_column_selector(dtype_include=object))
+)
+
+housing_prepared = preprocessing.fit_transform(housing)
+print(housing_prepared.shape)
+# print(preprocessing.get_feature_names_out())
+# print(pd.DataFrame(housing_prepared, columns=preprocessing.get_feature_names_out(), index=housing.index))
