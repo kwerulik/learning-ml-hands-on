@@ -208,13 +208,22 @@ housing_prepared = preprocessing.fit_transform(housing)
 # print(housing_labels.iloc[:5].values)
 
 # ? DecisionTreeRegression
-from sklearn.tree import DecisionTreeRegressor
+# from sklearn.tree import DecisionTreeRegressor
 
-tree_reg = make_pipeline(preprocessing, DecisionTreeRegressor(random_state=42))
-tree_reg.fit(housing, housing_labels)
-housing_predictions = tree_reg.predict(housing)
+# tree_reg = make_pipeline(preprocessing, DecisionTreeRegressor(random_state=42))
+# tree_reg.fit(housing, housing_labels)
+# housing_predictions = tree_reg.predict(housing)
+
+# ? RandomForestRegression
+from sklearn.ensemble import RandomForestRegressor
+forest_reg = make_pipeline(preprocessing, RandomForestRegressor(random_state=42))
 
 from sklearn.metrics import root_mean_squared_error
-rmse = root_mean_squared_error(housing_labels, housing_predictions)
-print(rmse)
+# rmse = root_mean_squared_error(housing_labels, housing_predictions)
+# print(rmse)
 
+from sklearn.model_selection import cross_val_score
+# tree_rmses = -cross_val_score(tree_reg, housing, housing_labels, scoring='neg_root_mean_squared_error', cv=10)
+# print(pd.Series(tree_rmses).describe())
+forest_rmse = -cross_val_score(forest_reg, housing, housing_labels, scoring='neg_root_mean_squared_error', cv=10)
+print(pd.Series(forest_rmse).describe())
