@@ -135,3 +135,37 @@ cat_encoder = OneHotEncoder()
 housing_cat_1hot = cat_encoder.fit_transform(housing_cat)
 
 # print(housing_cat_1hot.toarray())
+
+# from sklearn.preprocessing import MinMaxScaler
+# min_max_scaler = MinMaxScaler()
+# housing_min_max_scaled = min_max_scaler.fit_transform(housing_num)
+
+from sklearn.preprocessing import StandardScaler
+# std_scaler = StandardScaler()
+# housing_num_std_scaled = std_scaler.fit_transform(housing_num)
+
+from sklearn.linear_model import LinearRegression
+
+# target_scaler = StandardScaler()
+# scaled_labels = target_scaler.fit_transform(housing_labels.to_frame())
+
+# model = LinearRegression()
+# model.fit(housing_labels[["median_income"]], scaled_labels)
+# some_new_data = housing[["median_income"]].iloc[:5]
+
+# scaled_prediction = model.predict(some_new_data)
+# predictions = target_scaler.inverse_transform(scaled_prediction)
+
+# from sklearn.compose import TransformedTargetRegressor
+# model = TransformedTargetRegressor(LinearRegression(), transformer=StandardScaler())
+# model.fit(housing[["median_income"]], housing_labels)
+
+# some_new_data = housing[["median_income"]].iloc[:5]
+# predictions = model.predict(some_new_data)
+
+# from sklearn.preprocessing import FunctionTransformer
+# log_transformer = FunctionTransformer(np.log, inverse_func=np.exp)
+# log_pop = log_transformer.transform(housing[["population"]])
+
+from sklearn.pipeline import Pipeline
+num_pipeline = Pipeline([("impute", SimpleImputer(strategy='median')), ("standardize", StandardScaler())])
