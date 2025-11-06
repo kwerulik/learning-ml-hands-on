@@ -1,3 +1,11 @@
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.cluster import KMeans
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import root_mean_squared_error
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.pipeline import Pipeline
 from sklearn.compose import make_column_selector, make_column_transformer
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import make_pipeline
@@ -16,9 +24,33 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.impute import SimpleImputer
 from pandas.plotting import scatter_matrix
-
+from sklearn.preprocessing import FunctionTransformer
 data_path = Path("datasets/housing")
 
+
+class ClusterSimilarity(BaseEstimator, TransformerMixin):
+    # Klasa ta przyjmuje współrzędne geograficzne i oblicza podobieństwo
+    # do centroidów klastrów K-Means jako nowe cechy.
+    def __init__(self, n_clusters=10, gamma=1.0, random_state=None):
+        self.n_clusters = n_clusters
+        self.gamma = gamma
+        self.random_state = random_state
+
+    def fit(self, X, y=None):
+        # Dopasowujemy K-Means
+        self.kmeans_ = KMeans(
+            self.n_clusters, random_state=self.random_state, n_init=10)
+        self.kmeans_.fit(X)
+        return self
+
+    def transform(self, X):
+        # Obliczamy podobieństwo RBF do każdego centroidu
+        # To są nowe cechy dodane do modelu.
+        return rbf_kernel(X, self.kmeans_.cluster_centers_, gamma=self.gamma)
+
+    # Metoda wymagana do poprawnego działania ColumnTransformer w nowszych wersjach Scikit-learn
+    def get_feature_names_out(self, input_features=None):
+        return [f"cluster_sim_{i}" for i in range(self.n_clusters)]
 # * Loading data
 
 
@@ -171,7 +203,6 @@ housing_cat_1hot = cat_encoder.fit_transform(housing_cat)
 # log_transformer = FunctionTransformer(np.log, inverse_func=np.exp)
 # log_pop = log_transformer.transform(housing[["population"]])
 
-# from sklearn.pipeline import Pipeline
 # num_pipeline = Pipeline([("impute", SimpleImputer(strategy='median')), ("standardize", StandardScaler())])
 
 num_pipline = make_pipeline(SimpleImputer(strategy="median"), StandardScaler())
@@ -196,6 +227,39 @@ housing_prepared = preprocessing.fit_transform(housing)
 # print(preprocessing.get_feature_names_out())
 # print(pd.DataFrame(housing_prepared, columns=preprocessing.get_feature_names_out(), index=housing.index))
 
+
+def column_ratio(X):
+    return X[:, [0]] / X[:, [1]]
+
+
+def ratio_name(function_transformer, feature_names_in):
+    return ["ratio"]  # feature names out
+
+
+def ratio_pipeline():
+    return make_pipeline(
+        SimpleImputer(strategy="median"),
+        FunctionTransformer(column_ratio, feature_names_out=ratio_name),
+        StandardScaler())
+
+
+log_pipeline = make_pipeline(
+    SimpleImputer(strategy="median"),
+    FunctionTransformer(np.log, feature_names_out="one-to-one"),
+    StandardScaler())
+cluster_simil = ClusterSimilarity(n_clusters=10, gamma=1., random_state=42)
+default_num_pipeline = make_pipeline(SimpleImputer(strategy="median"),
+                                     StandardScaler())
+preprocessing = ColumnTransformer([
+    ("bedrooms", ratio_pipeline(), ["total_bedrooms", "total_rooms"]),
+    ("rooms_per_house", ratio_pipeline(), ["total_rooms", "households"]),
+    ("people_per_house", ratio_pipeline(), ["population", "households"]),
+    ("log", log_pipeline, ["total_bedrooms", "total_rooms", "population",
+                           "households", "median_income"]),
+    ("geo", cluster_simil, ["latitude", "longitude"]),
+    ("cat", cat_pipeline, make_column_selector(dtype_include=object)),
+],
+    remainder=default_num_pipeline)
 # * Train and Evaluate on the Training Set
 # ? LinearRegression
 # from sklearn.linear_model import LinearRegression
@@ -215,15 +279,28 @@ housing_prepared = preprocessing.fit_transform(housing)
 # housing_predictions = tree_reg.predict(housing)
 
 # ? RandomForestRegression
-from sklearn.ensemble import RandomForestRegressor
-forest_reg = make_pipeline(preprocessing, RandomForestRegressor(random_state=42))
+forest_reg = make_pipeline(
+    preprocessing, RandomForestRegressor(random_state=42))
 
-from sklearn.metrics import root_mean_squared_error
 # rmse = root_mean_squared_error(housing_labels, housing_predictions)
 # print(rmse)
 
-from sklearn.model_selection import cross_val_score
 # tree_rmses = -cross_val_score(tree_reg, housing, housing_labels, scoring='neg_root_mean_squared_error', cv=10)
 # print(pd.Series(tree_rmses).describe())
-forest_rmse = -cross_val_score(forest_reg, housing, housing_labels, scoring='neg_root_mean_squared_error', cv=10)
-print(pd.Series(forest_rmse).describe())
+# forest_rmse = -cross_val_score(forest_reg, housing, housing_labels, scoring='neg_root_mean_squared_error', cv=10)
+# print(pd.Series(forest_rmse).describe())
+
+full_pipeline = Pipeline([
+    ('preprocessing', preprocessing),
+    ('random_forest', RandomForestRegressor(random_state=42))
+])
+parm_grid = [
+    {'preprocessing__geo__n_clusters': [5, 8, 10],
+     'random_forest__max_features': [4, 6, 8]},
+    {'preprocessing__geo__n_clusters': [10, 15],
+     'random_forest__max_features': [6, 8, 10]}
+]
+grid_search = GridSearchCV(full_pipeline, parm_grid,
+                           cv=3, scoring='neg_root_mean_squared_error')
+grid_search.fit(housing, housing_labels)
+print(grid_search.best_params_)
