@@ -192,6 +192,29 @@ preprocessing = make_column_transformer(
 )
 
 housing_prepared = preprocessing.fit_transform(housing)
-print(housing_prepared.shape)
+# print(housing_prepared.shape)
 # print(preprocessing.get_feature_names_out())
 # print(pd.DataFrame(housing_prepared, columns=preprocessing.get_feature_names_out(), index=housing.index))
+
+# * Train and Evaluate on the Training Set
+# ? LinearRegression
+# from sklearn.linear_model import LinearRegression
+
+# lin_reg = make_pipeline(preprocessing, LinearRegression())
+# lin_reg.fit(housing, housing_labels)
+
+# housing_predictions = lin_reg.predict(housing)
+# print(housing_predictions[:5].round(-2))
+# print(housing_labels.iloc[:5].values)
+
+# ? DecisionTreeRegression
+from sklearn.tree import DecisionTreeRegressor
+
+tree_reg = make_pipeline(preprocessing, DecisionTreeRegressor(random_state=42))
+tree_reg.fit(housing, housing_labels)
+housing_predictions = tree_reg.predict(housing)
+
+from sklearn.metrics import root_mean_squared_error
+rmse = root_mean_squared_error(housing_labels, housing_predictions)
+print(rmse)
+
