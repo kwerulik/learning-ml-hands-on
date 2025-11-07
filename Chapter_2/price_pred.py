@@ -1,3 +1,5 @@
+from scipy import stats
+import joblib
 from scipy.stats import randint
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.metrics.pairwise import rbf_kernel
@@ -315,3 +317,30 @@ param_distribs = {
 rnd_search = RandomizedSearchCV(full_pipeline, param_distributions=param_distribs,
                                 n_iter=10, cv=3, scoring='neg_root_mean_squared_error', random_state=42)
 rnd_search.fit(housing, housing_labels)
+
+
+final_model = rnd_search.best_estimator_
+feature_importances = final_model["random_forest"].feature_importances_
+print(feature_importances.round(2))
+
+sorted(zip(feature_importances,
+       final_model["preprocessing"].get_feature_names_out()), reverse=True)
+
+X_test = strat_test_set.drop("median_house_value", axis=1)
+y_test = strat_test_set["median_house_value"].copy()
+fianl_predictions = final_model.predict(X_test)
+final_rmse = root_mean_squared_error(y_test, fianl_predictions)
+print(final_rmse)
+
+
+def rmse(squared_errors):
+    return np.sqrt(np.mean(squared_errors))
+
+
+confidence = 0.95
+squared_errors = (fianl_predictions - y_test) ** 2
+boot_result = stats.bootstrap(
+    [squared_errors], rmse, confidence_level=confidence, random_state=42)
+rmse_lower, rmse_upper = boot_result.confidence_interval
+
+joblib.dump(final_model, "my_california_housing_model.pkl")
