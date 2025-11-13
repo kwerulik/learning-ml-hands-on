@@ -6,7 +6,7 @@
 
 Witaj w moim repozytorium studyjnym! 👋
 
-Ten projekt dokumentuje moją ścieżkę rozwoju w obszarze Data Science i Machine Learningu. Znajdują się tutaj moje rozwiązania ćwiczeń, notatki oraz implementacje kodu z bestsellerowego podręcznika **Auréliena Gérona: "Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow" (3rd Edition)**.
+Ten projekt dokumentuje moją ścieżkę rozwoju w obszarze Data Science i Machine Learningu. Znajdują się tutaj moje rozwiązania ćwiczeń, notatki oraz implementacje kodu z podręcznika **Auréliena Gérona: "Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow" (3rd Edition)**.
 
 ## 🎯 Cel repozytorium
 Głównym celem jest praktyczne opanowanie fundamentów uczenia maszynowego poprzez:
@@ -19,7 +19,7 @@ Głównym celem jest praktyczne opanowanie fundamentów uczenia maszynowego popr
 W projekcie wykorzystuję standardowy stos technologiczny dla Data Science:
 * **Język:** Python
 * **Biblioteki:** Scikit-Learn, Pandas, NumPy, Matplotlib, Seaborn
-* **Środowisko:** Jupyter Notebook / Google Colab
+* **Środowisko:** Jupyter Notebook 
 
 ## 📊 Status Postępów (Progress Log)
 Na bieżąco aktualizuję postępy w przerabianiu materiału.
